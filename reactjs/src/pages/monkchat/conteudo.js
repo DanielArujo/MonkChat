@@ -1,26 +1,40 @@
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
 import LoadingBar from 'react-top-loading-bar'
  
 import { ContainerConteudo } from './conteudo.styled'
 import { ChatButton, ChatInput, ChatTextArea } from '../../components/outros/inputs'
 
 import { useState, useRef } from 'react';
+import { useHistory } from 'react-router-dom'
+import Cookies from 'js-cookie'
 
 import Api from '../../service/api';
 const api = new Api();
 
+function lerUsuarioLogado(navigation){
+    let logado = Cookies.get('usuario-logado');
+    if(logado == null)
+        navigation.push('/');
+
+    let usuarioLogado = JSON.parse(logado) 
+    return usuarioLogado
+}
 
 export default function Conteudo() {
+    const navigation = useHistory();
+    let usuarioLogado = lerUsuarioLogado(navigation);
+
     const [chat, setChat] = useState([]);
     const [sala, setSala] = useState('');
-    const [usu, setUsu] = useState('');
+    const [usu, setUsu] = useState(usuarioLogado.nm_usuario);
     const [msg, setMsg] = useState('')
 
     const loading = useRef(null);
 
-
+    
+    
+    
     const validarResposta = (resp) => {
         //console.log(resp);
 
@@ -40,7 +54,11 @@ export default function Conteudo() {
         loading.current.complete();
     }
 
-    const enviarMensagem = async () => {
+    const enviarMensagem = async (event) => {
+
+        if(!(event && event.ctrlKey && event.charCode == 13 ))
+            return;
+            
         const resp = await api.inserirMensagem(sala, usu, msg);
         if (!validarResposta(resp)) 
             return;
@@ -79,7 +97,7 @@ export default function Conteudo() {
                     </div>
                     <div>
                         <div className="label">Nick</div>
-                        <ChatInput value={usu} onChange={e => setUsu(e.target.value)} />
+                        <ChatInput value={usu} readOnly={true} />
                     </div>
                     <div>
                         <ChatButton onClick={inserirSala}> Criar </ChatButton>
@@ -88,13 +106,12 @@ export default function Conteudo() {
                 </div>
                 <div className="box-mensagem">
                     <div className="label">Mensagem</div>
-                    <ChatTextArea value={msg} onChange={e => setMsg(e.target.value)} />
+                    <ChatTextArea value={msg} onChange={e => setMsg(e.target.value)} onKeyPress={enviarMensagem} />
                     <ChatButton onClick={enviarMensagem} className="btn-enviar"> Enviar </ChatButton>
                 </div>
             </div>
             
             <div className="container-chat">
-                
                 <img onClick={carregarMensagens}
                    className="chat-atualizar"
                          src="/assets/images/atualizar.png" alt="" />
