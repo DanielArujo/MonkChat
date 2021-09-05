@@ -27,7 +27,7 @@ export default function Conteudo() {
 
     const [chat, setChat] = useState([]);
     const [sala, setSala] = useState('');
-    const [usu, setUsu] = useState(usuarioLogado.nm_usuario);
+    const [usu] = useState(usuarioLogado.nm_usuario);
     const [msg, setMsg] = useState('')
 
     const loading = useRef(null);
@@ -56,7 +56,7 @@ export default function Conteudo() {
 
     const enviarMensagem = async (event) => {
 
-        if(!(event && event.ctrlKey && event.charCode == 13 ))
+        if( event.type === "keypress" && (!event.ctrlKey || event.charCode !== 13 ))
             return;
             
         const resp = await api.inserirMensagem(sala, usu, msg);
@@ -83,6 +83,16 @@ export default function Conteudo() {
         
         toast.dark('💕 Sala cadastrada!');
         await carregarMensagens();
+    }
+
+    const apagarMensagem = async (id) => {
+        const r = await api.deletarMsgm(id);
+        if (!validarResposta(r)) 
+            return;
+        
+        toast.dark('💕 Mensagem apagada!');
+        await carregarMensagens();
+        
     }
     
     return (
@@ -120,6 +130,7 @@ export default function Conteudo() {
                     {chat.map(x =>
                         <div key={x.id_chat}>
                             <div className="chat-message">
+                                <div> <img onClick={() => apagarMensagem(x.id_chat)} src=" /assets/images/trash.svg" alt="" style={{cursor: 'pointer'}} /></div>
                                 <div>({new Date(x.dt_mensagem.replace('Z', '')).toLocaleTimeString()})</div>
                                 <div><b>{x.tb_usuario.nm_usuario}</b> fala para <b>Todos</b>:</div>
                                 <div> {x.ds_mensagem} </div>
